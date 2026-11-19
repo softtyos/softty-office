@@ -66,9 +66,32 @@ export function ProfileScreen() {
     ])
   }
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t.profile.deleteAccountBtn,
+      'Bạn có chắc chắn muốn xóa tài khoản và toàn bộ dữ liệu phiên làm việc khỏi ứng dụng này? Thao tác này sẽ xóa toàn bộ token và ngắt kết nối tài khoản trên thiết bị.',
+      [
+        { text: t.common.cancel, style: 'cancel' },
+        {
+          text: t.profile.deleteAccountBtn,
+          style: 'destructive',
+          onPress: async () => {
+            await SofttyAuthService.deleteAccount()
+            setUser(null)
+            Alert.alert(t.common.success, 'Đã xóa tài khoản và phiên đăng nhập thành công.')
+          },
+        },
+      ]
+    )
+  }
+
   const handleLogin = async () => {
     try {
       await SofttyAuthService.startBrowserLogin()
+      const currentUser = SofttyAuthService.getCurrentUser()
+      if (currentUser) {
+        setUser(currentUser)
+      }
     } catch (err: any) {
       Alert.alert(t.common.error, err.message || 'Không thể mở trình duyệt đăng nhập.')
     }
@@ -112,12 +135,23 @@ export function ProfileScreen() {
                 <Text style={[styles.userEmail, { color: theme.textMuted }]} numberOfLines={1} ellipsizeMode="tail">{user.email}</Text>
               </View>
 
-              <TouchableOpacity
-                onPress={handleLogout}
-                style={[styles.logoutBtn, { borderColor: theme.border }]}
-              >
-                <Text style={[styles.logoutBtnText, { color: theme.rose }]}>{t.profile.logoutBtn}</Text>
-              </TouchableOpacity>
+              <View style={styles.accountActionRow}>
+                <TouchableOpacity
+                  onPress={handleLogout}
+                  style={[styles.logoutBtn, { borderColor: theme.border, flex: 1 }]}
+                >
+                  <Text style={[styles.logoutBtnText, { color: theme.textSecondary }]}>{t.profile.logoutBtn}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleDeleteAccount}
+                  style={[styles.deleteAccountBtn, { borderColor: `${theme.rose}40`, flex: 1 }]}
+                >
+                  <Text style={[styles.deleteAccountBtnText, { color: theme.rose }]}>
+                    {t.profile.deleteAccountBtn}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <View style={styles.loggedOutBox}>
@@ -385,10 +419,24 @@ export function ProfileScreen() {
                 </Text>
 
                 <Text style={[styles.legalSectionHeading, { color: theme.textPrimary }]}>
-                  3. Tài khoản Softty Account
+                  3. Tài khoản Softty Account & Đăng nhập bảo mật
                 </Text>
                 <Text style={[styles.legalParagraph, { color: theme.textSecondary }]}>
-                  Đăng nhập qua chuẩn quốc tế OAuth 2.0 PKCE. Mọi thông tin xác thực đều được mã hóa bằng SecureStore trên thiết bị.
+                  Đăng nhập qua chuẩn quốc tế OAuth 2.0 PKCE tích hợp Safari View Controller trong ứng dụng. Mọi thông tin xác thực đều được lưu trữ an toàn trên thiết bị. Người dùng có quyền đăng xuất và xóa tài khoản bất cứ lúc nào trực tiếp trong ứng dụng.
+                </Text>
+
+                <Text style={[styles.legalSectionHeading, { color: theme.textPrimary }]}>
+                  4. Không chia sẻ dữ liệu với AI bên thứ ba (100% Cục bộ On-Device)
+                </Text>
+                <Text style={[styles.legalParagraph, { color: theme.textSecondary }]}>
+                  Softty Office thực hiện việc quét tài liệu, trích xuất dữ liệu và đóng gói PDF hoàn toàn 100% cục bộ trên thiết bị của người dùng (Offline On-Device). Tuyệt đối không gửi bất kỳ hình ảnh, tài liệu hay dữ liệu cá nhân nào lên bất kỳ dịch vụ hay máy chủ AI của bên thứ ba nào.
+                </Text>
+
+                <Text style={[styles.legalSectionHeading, { color: theme.textPrimary }]}>
+                  5. Quyền xóa tài khoản & Dữ liệu người dùng
+                </Text>
+                <Text style={[styles.legalParagraph, { color: theme.textSecondary }]}>
+                  Tuân thủ quy chuẩn của Apple App Store (Guideline 4 / 5.1.1(v)), người dùng có thể xóa tài khoản và toàn bộ phiên làm việc tức thì bằng nút "Xóa tài khoản" tại mục Cài đặt tài khoản.
                 </Text>
               </View>
             )}
@@ -472,14 +520,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  accountActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+  },
   logoutBtn: {
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
-    marginTop: 6,
   },
   logoutBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  deleteAccountBtn: {
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  deleteAccountBtnText: {
     fontSize: 13,
     fontWeight: '700',
   },

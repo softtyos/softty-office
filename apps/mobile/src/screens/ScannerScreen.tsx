@@ -237,17 +237,17 @@ export function ScannerScreen() {
     setPages((prev) => prev.map((p) => ({ ...p, filter })))
   }
 
-  // --- AI Document Intelligence ---
+  // --- Document Intelligence & Extraction (100% On-Device) ---
   const handleTriggerAiAnalysis = () => {
     if (pages.length === 0) {
-      Alert.alert(t.common.error, 'Vui lòng chụp hoặc thêm ít nhất một trang tài liệu để AI phân tích.')
+      Alert.alert(t.common.error, 'Vui lòng chụp hoặc thêm ít nhất một trang tài liệu để trích xuất.')
       return
     }
 
     setShowAiModal(true)
     setAiAnalyzing(true)
 
-    // Simulate smart local AI extraction
+    // Simulate smart local on-device extraction (no third-party cloud AI)
     setTimeout(() => {
       const isInvoice = selectedDocMode === 'receipt' || pages.length === 1
       const sampleAiData: ExtractedAiData = isInvoice
@@ -302,7 +302,7 @@ Giá trị: ${aiData.totalValue}
 Điều khoản cốt lõi:
 ${aiData.terms.map((t, idx) => `• ${idx + 1}. ${t}`).join('\n')}`
 
-    Alert.alert('Đã Sao Chép Tóm Tắt AI', 'Toàn bộ thông tin tài liệu đã sẵn sàng để dán vào tin nhắn hoặc email.')
+    Alert.alert('Đã Sao Chép Tóm Tắt', 'Toàn bộ thông tin tài liệu đã sẵn sàng để dán vào tin nhắn hoặc email.')
   }
 
   const handleCreateEditableDocFromAi = async () => {
@@ -323,7 +323,7 @@ ${aiData.terms.map((t, idx) => `• ${idx + 1}. ${t}`).join('\n')}`
 - **Tổng số tiền:** ${aiData.totalValue}
 
 ---
-### 3. CÁC ĐIỀU KHOẢN CỐT LÕI (TRÍCH XUẤT BỞI SOFTTY AI):
+### 3. CÁC ĐIỀU KHOẢN CỐT LÕI (TRÍCH XUẤT CỤC BỘ BỞI SOFTTY):
 ${aiData.terms.map((t, idx) => `${idx + 1}. ${t}`).join('\n\n')}
 
 ---
@@ -388,11 +388,11 @@ ${aiData.terms.map((t, idx) => `${idx + 1}. ${t}`).join('\n\n')}
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 16px; margin-bottom: 28px;">
               <div>
-                <h1 style="font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">SOFTTY OFFICE • AI AUDIT REPORT</h1>
-                <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">Chứng nhận số hóa tài liệu & Bóc tách thông tin tự động</p>
+                <h1 style="font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">SOFTTY OFFICE • AUDIT REPORT</h1>
+                <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">Chứng nhận số hóa tài liệu & Bóc tách thông tin tự động On-Device</p>
               </div>
               <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 700;">
-                VERIFIED BY AI
+                VERIFIED ON-DEVICE
               </div>
             </div>
 
@@ -628,7 +628,7 @@ ${aiData.terms.map((t, idx) => `${idx + 1}. ${t}`).join('\n\n')}
             <Text style={[styles.actionBtnText, { color: theme.textPrimary, fontSize: isSmall ? 11 : 12 }]} numberOfLines={1}>{t.scanner.fromGallery}</Text>
           </TouchableOpacity>
 
-          {/* AI Smart Assistant Trigger */}
+          {/* Smart Extraction Assistant Trigger */}
           <TouchableOpacity
             style={[
               styles.aiTriggerBtn,
@@ -640,8 +640,8 @@ ${aiData.terms.map((t, idx) => `${idx + 1}. ${t}`).join('\n\n')}
             onPress={handleTriggerAiAnalysis}
             activeOpacity={0.8}
           >
-            <Ionicons name="sparkles" size={15} color={theme.primary} style={{ marginRight: 4 }} />
-            <Text style={[styles.aiTriggerText, { color: theme.primary, fontSize: isSmall ? 11 : 12 }]} numberOfLines={1}>AI Quét</Text>
+            <Ionicons name="document-text-outline" size={15} color={theme.primary} style={{ marginRight: 4 }} />
+            <Text style={[styles.aiTriggerText, { color: theme.primary, fontSize: isSmall ? 11 : 12 }]} numberOfLines={1}>{t.scanner.aiAnalyzeBtn}</Text>
           </TouchableOpacity>
         </View>
 
@@ -1136,16 +1136,16 @@ ${aiData.terms.map((t, idx) => `${idx + 1}. ${t}`).join('\n\n')}
       <Modal visible={showAiModal} transparent={true} animationType="fade">
         <View style={styles.modalBackdrop}>
           <View style={[styles.aiModalContainer, { backgroundColor: theme.bgSurface, borderColor: theme.border }]}>
-            {/* AI Modal Header */}
+            {/* Modal Header */}
             <View style={styles.aiModalHeader}>
               <View style={styles.aiModalTitleRow}>
                 <View style={[styles.aiBadgeIcon, { backgroundColor: `${theme.primary}20` }]}>
-                  <Ionicons name="sparkles" size={18} color={theme.primary} />
+                  <Ionicons name="document-text" size={18} color={theme.primary} />
                 </View>
-                <View>
-                  <Text style={[styles.aiModalTitle, { color: theme.textPrimary }]}>{t.scanner.aiTitle}</Text>
-                  <Text style={[styles.aiModalSub, { color: theme.textMuted }]}>
-                    Bóc tách thực thể & Tóm tắt pháp lý On-Device
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={[styles.aiModalTitle, { color: theme.textPrimary }]} numberOfLines={1}>{t.scanner.aiTitle}</Text>
+                  <Text style={[styles.aiModalSub, { color: theme.emerald }]} numberOfLines={2}>
+                    {t.scanner.onDeviceNotice}
                   </Text>
                 </View>
               </View>

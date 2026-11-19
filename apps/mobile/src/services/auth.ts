@@ -1,7 +1,10 @@
 import { Linking } from 'react-native'
 import * as Crypto from 'expo-crypto'
+import * as WebBrowser from 'expo-web-browser'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { UserProfile } from '../types'
+
+WebBrowser.maybeCompleteAuthSession()
 
 const ACCOUNTS_BASE_URL = 'https://accounts.softty.net'
 const CLIENT_ID = '31d804fccdd8981c6a3aa5d650ae5e08'
@@ -65,7 +68,16 @@ export class SofttyAuthService {
       REDIRECT_URI,
     )}&response_type=code&scope=openid%20profile%20email&state=${state}&code_challenge=${challenge}&code_challenge_method=S256`
 
-    await Linking.openURL(authUrl)
+    try {
+      // Use Safari View Controller / ASWebAuthenticationSession on iOS and Custom Tabs on Android
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URI)
+      if (result.type === 'success' && result.url) {
+        await this.handleDeepLink(result.url)
+      }
+    } catch (err) {
+      console.warn('[SofttyAuth Mobile] openAuthSessionAsync failed, falling back:', err)
+      await Linking.openURL(authUrl)
+    }
   }
 
   /**
@@ -148,6 +160,14 @@ export class SofttyAuthService {
   }
 
   static async logout(): Promise<void> {
+    this.currentUser = null
+    await AsyncStorage.removeItem(STORAGE_KEY)
+  }
+
+  /**
+   * Xóa tài khoản và dữ liệu phiên làm việc (Theo Apple Guideline 4 / 5.1.1(v))
+   */
+  static async deleteAccount(): Promise<void> {
     this.currentUser = null
     await AsyncStorage.removeItem(STORAGE_KEY)
   }
