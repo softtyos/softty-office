@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import * as Sharing from 'expo-sharing'
+import * as Print from 'expo-print'
 import { Paths, File } from 'expo-file-system'
 import { useApp } from '../context/AppContext'
 import { OfficeDocument } from '../types'
@@ -138,6 +139,35 @@ export function DocumentViewerModal({ document, visible, onClose }: DocumentView
     }
   }
 
+  const getFileMimeType = (fileName: string, type: string): string => {
+    const ext = (fileName || '').split('.').pop()?.toLowerCase() || ''
+    switch (ext) {
+      case 'pdf':
+        return 'application/pdf'
+      case 'docx':
+      case 'doc':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      case 'xlsx':
+      case 'xls':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      case 'pptx':
+      case 'ppt':
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      case 'txt':
+        return 'text/plain'
+      case 'csv':
+        return 'text/csv'
+      case 'html':
+      case 'htm':
+        return 'text/html'
+      case 'md':
+      case 'markdown':
+        return 'text/markdown'
+      default:
+        return type === 'pdf' ? 'application/pdf' : 'application/octet-stream'
+    }
+  }
+
   const handleShare = async () => {
     if (!document) return
     try {
@@ -147,12 +177,29 @@ export function DocumentViewerModal({ document, visible, onClose }: DocumentView
         return
       }
       const reliableUri = await getReliableFileUri(document)
+      const mime = getFileMimeType(document.name, document.type)
       await Sharing.shareAsync(reliableUri, {
-        mimeType: 'application/octet-stream',
-        dialogTitle: `Chia sẻ ${document.name}`,
+        mimeType: mime,
+        dialogTitle: `${t.viewer.openExternal}: ${document.name}`,
+        UTI: document.type === 'pdf' ? 'com.adobe.pdf' : undefined,
       })
     } catch (err: any) {
-      Alert.alert(t.common.error, `Không thể chia sẻ tệp: ${err.message || err}`)
+      Alert.alert(t.common.error, `Không thể mở/chia sẻ tệp: ${err.message || err}`)
+    }
+  }
+
+  const handlePrintOrNativePreview = async () => {
+    if (!document) return
+    try {
+      const reliableUri = await getReliableFileUri(document)
+      if (document.type === 'pdf') {
+        await Print.printAsync({ uri: reliableUri })
+      } else {
+        // Share to open with default reader
+        await handleShare()
+      }
+    } catch (err: any) {
+      Alert.alert(t.common.error, `Không thể mở bản in / xem trước: ${err.message || err}`)
     }
   }
 
@@ -240,6 +287,14 @@ export function DocumentViewerModal({ document, visible, onClose }: DocumentView
               <Text style={[styles.beamBtnText, isSmall && { fontSize: 11 }]}>
                 {sendingDrop ? '...' : (isSmall ? 'Desktop' : 'Gửi Desktop')}
               </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handlePrintOrNativePreview}
+              style={[styles.iconBtn, { backgroundColor: theme.bgElevated }]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={document.type === 'pdf' ? 'print-outline' : 'open-outline'} size={18} color={theme.textPrimary} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleShare} style={[styles.iconBtn, { backgroundColor: theme.bgElevated }]} activeOpacity={0.7}>
@@ -688,6 +743,31 @@ export function DocumentViewerModal({ document, visible, onClose }: DocumentView
                           `Tài liệu PDF điện tử "${document.name}". Mọi chữ ký số và dữ liệu bảo mật đều được xác thực cục bộ.`}
                     </Text>
                   )}
+                </View>
+
+                {/* Quick actions for native view & share */}
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+                  <TouchableOpacity
+                    onPress={handlePrintOrNativePreview}
+                    style={[styles.pdfSecondaryActionBtn, { borderColor: theme.border, backgroundColor: theme.bgElevated }]}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="print-outline" size={16} color={theme.textPrimary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.pdfSecondaryActionText, { color: theme.textPrimary }]}>
+                      {t.viewer.printOrPdfPreview}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleShare}
+                    style={[styles.pdfSecondaryActionBtn, { borderColor: theme.border, backgroundColor: theme.bgElevated }]}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="open-outline" size={16} color={theme.textPrimary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.pdfSecondaryActionText, { color: theme.textPrimary }]}>
+                      {t.viewer.openExternal}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* E-Signature Box */}
@@ -1211,6 +1291,20 @@ const styles = StyleSheet.create({
   signedSubtitle: {
     fontSize: 11,
     marginTop: 2,
+  },
+  pdfSecondaryActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  pdfSecondaryActionText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   signPdfBtn: {
     paddingVertical: 12,
