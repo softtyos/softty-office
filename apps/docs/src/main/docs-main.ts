@@ -6961,7 +6961,7 @@ export function createDocsView(openPath?: string): WebContentsView {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      backgroundThrottling: false,
+      backgroundThrottling: true,
     },
   })
 

@@ -1095,7 +1095,7 @@ function createHelpView(): WebContentsView {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      backgroundThrottling: false,
+      backgroundThrottling: true,
     },
   })
   view.webContents.setWindowOpenHandler(({ url }) => {
